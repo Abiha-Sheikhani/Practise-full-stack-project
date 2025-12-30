@@ -21,10 +21,10 @@
       <div class="form signin">
         <form>
           <h2>Login</h2>
-          <input type="text" placeholder="Email" />
-          <input type="password" placeholder="Password" />
+          <input type="text" placeholder="Email" id="loginEmail" />
+          <input type="password" placeholder="loginPassword" id="loginPassword" />
           <p>Forgot password?</p>
-          <button>SIGN IN</button>
+          <button id="loginBtn" type="button">SIGN IN</button>
           <a onclick="toggleView()">Don't have an account? <em>Sign up</em></a>
         </form>
       </div>
@@ -34,11 +34,12 @@
           <input type="text" placeholder="Name" id="username" />
           <input type="email" placeholder="Email" id="email" />
           <input type="password" placeholder="Password" id="password" />
-          <button>SIGN UP</button>
+          <button id="btn" type="button">SIGN UP</button>
           <a onclick="toggleView()">Alread have an account? <em>Sign in</em></a>
         </form>
       </div>
     </div>
+      <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script type="module" src="./authen.js"></script>
        <script type="module" src="./config.js"></script>
    <script>
