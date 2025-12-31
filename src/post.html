@@ -4,36 +4,146 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Post Feed</title>
-  <!-- Bootstrap CSS -->
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
   <!-- SweetAlert -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
-<body>
-  <div class="container mt-5">
 
-  <!-- Create Post Form -->
-  <div class="card mb-4">
-    <div class="card-body">
-      <h5 class="card-title">Create a Post</h5>
-      <input type="text" id="postTitle" class="form-control mb-2" placeholder="Post Title" />
-      <textarea id="postDesc" class="form-control mb-2" rows="3" placeholder="Post Description"></textarea>
-      <input type="file" id="postImage" class="form-control mb-2" accept="image/*" />
+  <style>
+    body {
+      background: #f3f2ef;
+    }
+
+    .layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background: #ffffff;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+    }
+
+    .profile-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .profile-btn:hover {
+      color: #0a66c2;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #0a66c2;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    /* Main content */
+    .main-content {
+      flex: 1;
+      padding: 30px;
+    }
+
+    /* Posts */
+    #postsContainer {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 600px;
+      border-radius: 12px;
+    }
+
+    /* Profile Panel */
+    .profile-panel {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 350px;
+      height: 100%;
+      background: #fff;
+      box-shadow: -2px 0 10px rgba(0,0,0,0.2);
+      transition: right 0.3s ease;
+      padding: 20px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+
+    .profile-panel.active {
+      right: 0;
+    }
+
+    .my-post {
+      font-size: 0.85rem;
+      border-bottom: 1px solid #eee;
+      padding: 6px 0;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="profile-btn" id="openProfile">
+      <div class="avatar">U</div>
+      <span>My Profile</span>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- Create Post -->
+    <div class="card mb-4 p-3">
+      <h5>Create a Post</h5>
+      <input type="text" id="postTitle" class="form-control mb-2" placeholder="Post title" />
+      <textarea id="postDesc" class="form-control mb-2" rows="3" placeholder="Post description"></textarea>
+      <input type="file" id="postImage" class="form-control mb-2" />
       <button id="postBtn" class="btn btn-primary">Post</button>
     </div>
-  </div>
 
-  <!-- Posts Feed -->
-  <div id="postsContainer"></div>
+    <!-- Posts Feed -->
+    <div id="postsContainer"></div>
+  </main>
 </div>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Supabase JS -->
-  <script type="module" src="./posts.js"></script>
-  <script type="module" src="./config.js"></script>
+<!-- PROFILE PANEL -->
+<div class="profile-panel" id="profilePanel">
+  <button class="btn-close float-end" id="closeProfile"></button>
+  <h5>My Profile</h5>
+
+  <p><strong>Username:</strong> <span id="profileName"></span></p>
+  <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+
+  <hr />
+  <h6>My Posts</h6>
+  <div id="myPosts"></div>
+</div>
+
+<!-- JS -->
+<script type="module" src="./posts.js"></script>
+<script type="module" src="./config.js"></script>
 </body>
 </html>

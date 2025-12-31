@@ -70,10 +70,21 @@ else{
         icon: "success",
         timer: 2000,
       });
+      const { data: postData, error: insertError } = await client
+    .from("users-data")
+    .insert([{ name: username.value, email : email.value , role: "user" }]);
+
+  if (insertError) {
+    Swal.fire("Error", insertError.message, "error");
+    return;
+  }
      setTimeout(() => {
   toggleView();
+  
 }, 2000);
-
+username.value = ""
+email.value = ""
+password.value = ""
 }
      
     } catch (err) {
@@ -113,7 +124,12 @@ loginBtn &&
           draggable: true,
           timer: 2000,
         });
-     window.location = "./post.html"
+        loginEmail.value = ""
+        loginPassword.value = ""
+        setTimeout(()=>{
+     window.location = "post.html"
+        },2000)
+
      console.log(data);
      
       }

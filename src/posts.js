@@ -8,6 +8,11 @@ const postsContainer = document.getElementById("postsContainer");
 
 // Fetch posts on load
 window.addEventListener("DOMContentLoaded", fetchPosts);
+const { data: { user } } = await client.auth.getUser()
+console.log(user?.user_metadata?.username );
+if(!user){
+  window.location = "index.html"
+}
 
 // Add Post
 postBtn.addEventListener("click", async () => {
@@ -24,9 +29,9 @@ postBtn.addEventListener("click", async () => {
 
   // Upload image if exists
   if (imageFile) {
-    const fileName = `${Date.now()}_${imageFile.name}`;
+    const fileName = `${Date.now()}_${imageFile.name.replace(/\s/g, "_")}`;
     const { data, error: uploadError } = await client.storage
-      .from("posts-images") // bucket name
+      .from("posts-images")
       .upload(fileName, imageFile);
 
     if (uploadError) {
@@ -34,15 +39,14 @@ postBtn.addEventListener("click", async () => {
       return;
     }
 
-    // Get public URL
-    const { publicUrl } = client.storage.from("posts-images").getPublicUrl(fileName);
-    imageUrl = publicUrl;
+    const { data: urlData } = client.storage.from("posts-images").getPublicUrl(fileName);
+    imageUrl = urlData.publicUrl;
   }
 
   // Insert post
   const { data: postData, error: insertError } = await client
     .from("posts")
-    .insert([{ title, description: desc, image_url: imageUrl, status: "approved", created_at: new Date() }]);
+    .insert([{ title, description: desc, image_url: imageUrl , uid : user.id , name_of_user: user?.user_metadata?.username }]);
 
   if (insertError) {
     Swal.fire("Error", insertError.message, "error");
@@ -61,11 +65,8 @@ postBtn.addEventListener("click", async () => {
 
 // Fetch & Render posts
 async function fetchPosts() {
-  const { data: posts, error } = await client
-    .from("posts")
-    .select("*")
-    .eq("status", "approved")
-    .order("created_at", { ascending: false });
+    
+  const { data: posts, error } = await client.from("posts").select("*");
 
   if (error) return console.error(error.message);
 
@@ -73,15 +74,79 @@ async function fetchPosts() {
 
   posts.forEach((post) => {
     const postEl = document.createElement("div");
-    postEl.classList.add("card", "mb-3");
+    postEl.classList.add("card", "mb-4", "shadow-sm", "p-3");
     postEl.innerHTML = `
       <div class="card-body">
-        <h5 class="card-title">${post.title}</h5>
+        <div class="d-flex align-items-center mb-3">
+          <div class="avatar rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-2" style="width:40px;height:40px;">
+            ${post.name_of_user[0].toUpperCase()}
+          </div>
+          <div>
+            <h6 class="mb-0">${post.name_of_user}</h6>
+            <small class="text-muted">${new Date(post.created_at).toLocaleString()}</small>
+          </div>
+        </div>
+<h3>${post.title}</h3>
         <p class="card-text">${post.description}</p>
-        ${post.image_url ? `<img src="${post.image_url}" class="img-fluid mb-2" />` : ""}
-        <small class="text-muted">Posted at: ${new Date(post.created_at).toLocaleString()}</small>
+        ${post.image_url ? `<img src="${post.image_url}" class="img-fluid rounded mb-3" />` : ""}
+
+        <!-- Likes and Comments Section -->
+        <div class="d-flex justify-content-between align-items-center mt-2">
+          <div>
+            <button class="btn btn-sm btn-outline-primary like-btn" data-id="${post.id}">👍 Like (<span class="like-count">0</span>)</button>
+          </div>
+          <div>
+            <button class="btn btn-sm btn-outline-secondary comment-toggle-btn" data-id="${post.id}">💬 Comments</button>
+          </div>
+        </div>
+
+        <!-- Comment Form (hidden initially) -->
+        <div class="comment-section mt-2" style="display:none;">
+          <input type="text" class="form-control mb-2 comment-input" placeholder="Write a comment...">
+          <button class="btn btn-sm btn-primary comment-submit-btn mb-2" data-id="${post.id}">Post Comment</button>
+          <div class="comment-list"></div>
+        </div>
       </div>
     `;
     postsContainer.appendChild(postEl);
   });
 }
+
+// Likes & Comments functionality
+postsContainer.addEventListener("click", async (e) => {
+  // Like button
+  if (e.target.classList.contains("like-btn")) {
+    const postId = e.target.dataset.id;
+
+    // Here you can insert into a 'likes' table for full functionality
+    const countEl = e.target.querySelector(".like-count");
+    countEl.textContent = parseInt(countEl.textContent) + 1;
+  }
+
+  // Toggle comment section
+  if (e.target.classList.contains("comment-toggle-btn")) {
+    const postCard = e.target.closest(".card-body");
+    const commentSection = postCard.querySelector(".comment-section");
+    commentSection.style.display = commentSection.style.display === "none" ? "block" : "none";
+  }
+
+  // Submit comment
+  if (e.target.classList.contains("comment-submit-btn")) {
+    const postId = e.target.dataset.id;
+    const postCard = e.target.closest(".card-body");
+    const input = postCard.querySelector(".comment-input");
+    const commentText = input.value.trim();
+    if (!commentText) return;
+
+    // Here you can insert into a 'comments' table for full functionality
+    const commentList = postCard.querySelector(".comment-list");
+    const commentEl = document.createElement("div");
+    commentEl.classList.add("border-top", "p-1");
+    commentEl.textContent = commentText;
+    commentList.appendChild(commentEl);
+    input.value = "";
+  }
+});
+
+
+// in thissss we are doinggg user  alll profilee functionalityyyyyyyy 
