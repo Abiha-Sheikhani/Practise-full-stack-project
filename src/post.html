@@ -97,6 +97,44 @@
       border-bottom: 1px solid #eee;
       padding: 6px 0;
     }
+ 
+.profile-box:hover {
+  background: #f3f6f8;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.avatar {
+  width: 45px;
+  height: 45px;
+  background: #0073b1;
+  color: #fff;
+  border-radius: 50%;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-info strong {
+  font-size: 0.9rem;
+}
+
+.sidebar-btn {
+  width: 100%;
+  border: none;
+  background: #fff;
+  padding: 10px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.sidebar-btn:hover {
+  background: #fdecea;
+  color: #c62828;
+}
+
   </style>
 </head>
 
@@ -105,12 +143,22 @@
 <div class="layout">
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="profile-btn" id="openProfile">
-      <div class="avatar">U</div>
-      <span>My Profile</span>
+<aside class="sidebar">
+  <div class="profile-box" id="openProfile">
+    <div class="avatar" id="sidebarAvatar">U</div>
+    <div class="profile-info">
+      <strong id="sidebarUsername">Username</strong>
+      <small class="text-muted">View profile</small>
     </div>
-  </aside>
+  </div>
+
+  <hr />
+
+  <button class="sidebar-btn" id="logoutBtn">
+    🔓 Logout
+  </button>
+</aside>
+
 
   <!-- MAIN -->
   <main class="main-content">

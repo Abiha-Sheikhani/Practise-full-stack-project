@@ -150,3 +150,130 @@ postsContainer.addEventListener("click", async (e) => {
 
 
 // in thissss we are doinggg user  alll profilee functionalityyyyyyyy 
+
+const openProfile = document.getElementById("openProfile");
+const closeProfile = document.getElementById("closeProfile");
+const profilePanel = document.getElementById("profilePanel");
+
+openProfile.addEventListener("click", () => {
+  profilePanel.classList.add("active");
+  loadProfile();   // IMPORTANT: load data when opened
+});
+
+closeProfile.addEventListener("click", () => {
+  profilePanel.classList.remove("active");
+});
+
+
+//   now we are fetchinggg user dataaaa
+
+async function loadProfile() {
+  const { data: { user } } = await client.auth.getUser();
+
+  document.getElementById("profileName").textContent =
+    user.user_metadata.username || "No username";
+
+  document.getElementById("profileEmail").textContent = user.email;
+
+  loadMyPosts(user.id);
+}
+
+
+//   now we are fetching specific user dataaa
+
+async function loadMyPosts(uid) {
+  const container = document.getElementById("myPosts");
+  container.innerHTML = "";
+
+  const { data: posts, error } = await client
+    .from("posts")
+    .select("*")
+    .eq("uid", uid)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    container.innerHTML = "Error loading posts";
+    return;
+  }
+
+  if (posts.length === 0) {
+    container.innerHTML = "<small>No posts yet</small>";
+    return;
+  }
+
+  posts.forEach(post => {
+    const div = document.createElement("div");
+    div.className = "card mb-3 shadow-sm p-3";
+
+    div.innerHTML = `
+      <div class="d-flex align-items-center mb-2">
+        <div class="avatar">
+          ${post.name_of_user[0].toUpperCase()}
+        </div>
+        <div class="ms-2">
+          <strong>${post.name_of_user}</strong><br/>
+          <small class="text-muted">
+            ${new Date(post.created_at).toLocaleString()}
+          </small>
+        </div>
+      </div>
+
+      <h6 class="fw-bold">${post.title}</h6>
+      <p class="mb-2">${post.description}</p>
+
+      ${
+        post.image_url
+          ? `<img src="${post.image_url}" class="img-fluid rounded mb-2"/>`
+          : ""
+      }
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+
+//  some sidebarr interectivity
+
+const {
+  data: { user :myuser },
+} = await client.auth.getUser();
+
+if (!myuser) {
+  window.location = "index.html";
+}
+
+document.getElementById("sidebarUsername").textContent =
+  user.user_metadata.username;
+
+document.getElementById("sidebarAvatar").textContent =
+  user.user_metadata.username[0].toUpperCase();
+
+  document.getElementById("openProfile").addEventListener("click", () => {
+  document.getElementById("profileSection").scrollIntoView({
+    behavior: "smooth",
+  });
+});
+
+// /////////////////////logoutt
+  const logoutBtn = document.getElementById("logoutBtn");
+
+logoutBtn.addEventListener("click", async () => {
+  const { error } = await client.auth.signOut();
+
+  if (error) {
+    Swal.fire("Error", error.message, "error");
+    return;
+  }
+
+  Swal.fire({
+    title: "Logged out",
+    icon: "success",
+    timer: 1200,
+    showConfirmButton: false,
+  });
+
+  setTimeout(() => {
+    window.location = "index.html";
+  }, 1200);
+});
