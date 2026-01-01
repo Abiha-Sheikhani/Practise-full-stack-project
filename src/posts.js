@@ -226,6 +226,15 @@ async function loadMyPosts(uid) {
           ? `<img src="${post.image_url}" class="img-fluid rounded mb-2"/>`
           : ""
       }
+      <div class="d-flex gap-2 mt-2">
+  <button class="btn btn-sm btn-outline-warning edit-post" data-id="${post.id}">
+    Edit
+  </button>
+  <button class="btn btn-sm btn-outline-danger delete-post" data-id="${post.id}">
+    Delete
+  </button>
+</div>
+
     `;
 
     container.appendChild(div);
