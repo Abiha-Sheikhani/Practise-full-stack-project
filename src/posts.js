@@ -1,4 +1,6 @@
 import client from "./config.js";
+let editingPostId = null;
+let oldImageUrl = null;
 
 const postBtn = document.getElementById("postBtn");
 const postTitle = document.getElementById("postTitle");
@@ -8,14 +10,40 @@ const postsContainer = document.getElementById("postsContainer");
 
 // Fetch posts on load
 window.addEventListener("DOMContentLoaded", fetchPosts);
-const { data: { user } } = await client.auth.getUser()
-console.log(user?.user_metadata?.username );
-if(!user){
-  window.location = "index.html"
+
+// Check authentication
+let currentUser = null;
+async function checkAuth() {
+  const { data: { user } } = await client.auth.getUser();
+  console.log(user?.user_metadata?.username);
+  
+  if (!user) {
+    window.location = "index.html";
+  }
+  
+  currentUser = user;
+  return user;
 }
+
+// Initialize
+checkAuth().then(user => {
+  if (user) {
+    document.getElementById("sidebarUsername").textContent = 
+      user.user_metadata.username || user.email;
+    
+    document.getElementById("sidebarAvatar").textContent =
+      (user.user_metadata.username || user.email)[0].toUpperCase();
+  }
+});
 
 // Add Post
 postBtn.addEventListener("click", async () => {
+  const { data: { user } } = await client.auth.getUser();
+  if (!user) {
+    window.location = "index.html";
+    return;
+  }
+
   const title = postTitle.value.trim();
   const desc = postDesc.value.trim();
   const imageFile = postImage.files[0];
@@ -46,7 +74,13 @@ postBtn.addEventListener("click", async () => {
   // Insert post
   const { data: postData, error: insertError } = await client
     .from("posts")
-    .insert([{ title, description: desc, image_url: imageUrl , uid : user.id , name_of_user: user?.user_metadata?.username }]);
+    .insert([{ 
+      title, 
+      description: desc, 
+      image_url: imageUrl, 
+      uid: user.id, 
+      name_of_user: user?.user_metadata?.username || user.email 
+    }]);
 
   if (insertError) {
     Swal.fire("Error", insertError.message, "error");
@@ -65,7 +99,6 @@ postBtn.addEventListener("click", async () => {
 
 // Fetch & Render posts
 async function fetchPosts() {
-    
   const { data: posts, error } = await client.from("posts").select("*");
 
   if (error) return console.error(error.message);
@@ -79,14 +112,14 @@ async function fetchPosts() {
       <div class="card-body">
         <div class="d-flex align-items-center mb-3">
           <div class="avatar rounded-circle bg-primary text-white d-flex justify-content-center align-items-center me-2" style="width:40px;height:40px;">
-            ${post.name_of_user[0].toUpperCase()}
+            ${post.name_of_user ? post.name_of_user[0].toUpperCase() : 'U'}
           </div>
           <div>
-            <h6 class="mb-0">${post.name_of_user}</h6>
+            <h6 class="mb-0">${post.name_of_user || 'Unknown User'}</h6>
             <small class="text-muted">${new Date(post.created_at).toLocaleString()}</small>
           </div>
         </div>
-<h3>${post.title}</h3>
+        <h3>${post.title}</h3>
         <p class="card-text">${post.description}</p>
         ${post.image_url ? `<img src="${post.image_url}" class="img-fluid rounded mb-3" />` : ""}
 
@@ -117,8 +150,6 @@ postsContainer.addEventListener("click", async (e) => {
   // Like button
   if (e.target.classList.contains("like-btn")) {
     const postId = e.target.dataset.id;
-
-    // Here you can insert into a 'likes' table for full functionality
     const countEl = e.target.querySelector(".like-count");
     countEl.textContent = parseInt(countEl.textContent) + 1;
   }
@@ -132,13 +163,11 @@ postsContainer.addEventListener("click", async (e) => {
 
   // Submit comment
   if (e.target.classList.contains("comment-submit-btn")) {
-    const postId = e.target.dataset.id;
     const postCard = e.target.closest(".card-body");
     const input = postCard.querySelector(".comment-input");
     const commentText = input.value.trim();
     if (!commentText) return;
 
-    // Here you can insert into a 'comments' table for full functionality
     const commentList = postCard.querySelector(".comment-list");
     const commentEl = document.createElement("div");
     commentEl.classList.add("border-top", "p-1");
@@ -148,39 +177,33 @@ postsContainer.addEventListener("click", async (e) => {
   }
 });
 
-
-// in thissss we are doinggg user  alll profilee functionalityyyyyyyy 
-
+// Profile functionality
 const openProfile = document.getElementById("openProfile");
 const closeProfile = document.getElementById("closeProfile");
 const profilePanel = document.getElementById("profilePanel");
 
-openProfile.addEventListener("click", () => {
+openProfile.addEventListener("click", async () => {
   profilePanel.classList.add("active");
-  loadProfile();   // IMPORTANT: load data when opened
+  await loadProfile();
 });
 
 closeProfile.addEventListener("click", () => {
   profilePanel.classList.remove("active");
 });
 
-
-//   now we are fetchinggg user dataaaa
-
+// Load profile data
 async function loadProfile() {
   const { data: { user } } = await client.auth.getUser();
 
   document.getElementById("profileName").textContent =
-    user.user_metadata.username || "No username";
+    user.user_metadata.username || user.email;
 
   document.getElementById("profileEmail").textContent = user.email;
 
   loadMyPosts(user.id);
 }
 
-
-//   now we are fetching specific user dataaa
-
+// Load user's posts
 async function loadMyPosts(uid) {
   const container = document.getElementById("myPosts");
   container.innerHTML = "";
@@ -207,11 +230,11 @@ async function loadMyPosts(uid) {
 
     div.innerHTML = `
       <div class="d-flex align-items-center mb-2">
-        <div class="avatar">
-          ${post.name_of_user[0].toUpperCase()}
+        <div class="avatar" style="width:30px;height:30px;border-radius:50%;background:#007bff;color:white;display:flex;align-items:center;justify-content:center;">
+          ${post.name_of_user ? post.name_of_user[0].toUpperCase() : 'U'}
         </div>
         <div class="ms-2">
-          <strong>${post.name_of_user}</strong><br/>
+          <strong>${post.name_of_user || 'Unknown User'}</strong><br/>
           <small class="text-muted">
             ${new Date(post.created_at).toLocaleString()}
           </small>
@@ -227,47 +250,33 @@ async function loadMyPosts(uid) {
           : ""
       }
       <div class="d-flex gap-2 mt-2">
-  <button class="btn btn-sm btn-outline-warning edit-post" data-id="${post.id}">
-    Edit
-  </button>
-  <button class="btn btn-sm btn-outline-danger delete-post" data-id="${post.id}">
-    Delete
-  </button>
-</div>
-
+        <button class="btn btn-sm btn-outline-warning edit-post" data-id="${post.id}">
+          Edit
+        </button>
+        <button class="btn btn-sm btn-outline-danger delete-post" data-id="${post.id}">
+          Delete
+        </button>
+      </div>
     `;
 
     container.appendChild(div);
   });
 }
 
-
-//  some sidebarr interectivity
-
-const {
-  data: { user :myuser },
-} = await client.auth.getUser();
-
-if (!myuser) {
-  window.location = "index.html";
-}
-
-document.getElementById("sidebarUsername").textContent =
-  user.user_metadata.username;
-
-document.getElementById("sidebarAvatar").textContent =
-  user.user_metadata.username[0].toUpperCase();
-
-  document.getElementById("openProfile").addEventListener("click", () => {
-  document.getElementById("profileSection").scrollIntoView({
-    behavior: "smooth",
-  });
+// Scroll to profile section
+document.getElementById("openProfile")?.addEventListener("click", () => {
+  const profileSection = document.getElementById("profileSection");
+  if (profileSection) {
+    profileSection.scrollIntoView({
+      behavior: "smooth",
+    });
+  }
 });
 
-// /////////////////////logoutt
-  const logoutBtn = document.getElementById("logoutBtn");
+// Logout functionality
+const logoutBtn = document.getElementById("logoutBtn");
 
-logoutBtn.addEventListener("click", async () => {
+logoutBtn?.addEventListener("click", async () => {
   const { error } = await client.auth.signOut();
 
   if (error) {
@@ -285,4 +294,138 @@ logoutBtn.addEventListener("click", async () => {
   setTimeout(() => {
     window.location = "index.html";
   }, 1200);
+});
+
+// Edit and delete functionality
+document.getElementById("myPosts").addEventListener("click", async (e) => {
+  const postId = e.target.dataset.id;
+
+  // DELETE
+  if (e.target.classList.contains("delete-post")) {
+    const confirm = await Swal.fire({
+      title: "Delete post?",
+      text: "This cannot be undone",
+      icon: "warning",
+      showCancelButton: true,
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    const { error } = await client
+      .from("posts")
+      .delete()
+      .eq("id", postId);
+
+    if (error) {
+      Swal.fire("Error", error.message, "error");
+      return;
+    }
+
+    Swal.fire("Deleted", "Post removed", "success");
+    
+    const { data: { user } } = await client.auth.getUser();
+    loadMyPosts(user.id);
+    fetchPosts();
+  }
+
+  // EDIT
+  if (e.target.classList.contains("edit-post")) {
+    editingPostId = e.target.dataset.id;
+
+    const { data, error } = await client
+      .from("posts")
+      .select("*")
+      .eq("id", editingPostId)
+      .single();
+
+    if (error) {
+      Swal.fire("Error", error.message, "error");
+      return;
+    }
+
+    document.getElementById("editTitle").value = data.title;
+    document.getElementById("editDesc").value = data.description;
+
+    oldImageUrl = data.image_url;
+
+    if (data.image_url) {
+      const preview = document.getElementById("editPreview");
+      preview.src = data.image_url;
+      preview.classList.remove("d-none");
+    }
+
+    // Show modal
+    const editModal = new bootstrap.Modal(document.getElementById("editPostModal"));
+    editModal.show();
+  }
+});
+
+// Edit image preview
+document.getElementById("editImage")?.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const preview = document.getElementById("editPreview");
+  preview.src = URL.createObjectURL(file);
+  preview.classList.remove("d-none");
+});
+
+// Save edit
+document.getElementById("saveEditBtn")?.addEventListener("click", async () => {
+  const title = document.getElementById("editTitle").value.trim();
+  const desc = document.getElementById("editDesc").value.trim();
+  const imageFile = document.getElementById("editImage").files[0];
+
+  if (!title || !desc) {
+    Swal.fire("Error", "Title and description required", "error");
+    return;
+  }
+
+  let imageUrl = oldImageUrl;
+
+  // Upload new image if selected
+  if (imageFile) {
+    const fileName = `${Date.now()}_${imageFile.name}`;
+
+    const { error: uploadError } = await client.storage
+      .from("posts-images")
+      .upload(fileName, imageFile);
+
+    if (uploadError) {
+      Swal.fire("Error", uploadError.message, "error");
+      return;
+    }
+
+    const { data } = client.storage
+      .from("posts-images")
+      .getPublicUrl(fileName);
+
+    imageUrl = data.publicUrl;
+  }
+
+  const { error } = await client
+    .from("posts")
+    .update({
+      title,
+      description: desc,
+      image_url: imageUrl,
+    })
+    .eq("id", editingPostId);
+
+  if (error) {
+    Swal.fire("Error", error.message, "error");
+    return;
+  }
+
+  Swal.fire("Updated", "Post updated successfully", "success");
+
+  const { data: { user } } = await client.auth.getUser();
+  loadMyPosts(user.id);
+  fetchPosts();
+
+  // Hide modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById("editPostModal"));
+  if (modal) {
+    modal.hide();
+  }
 });

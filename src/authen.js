@@ -63,7 +63,7 @@ btn &&
 else{
   console.log(data);
   
-   console.log(data.user.user_metadata);
+   console.log(data.user.user_metadata.sub);
 
       Swal.fire({
         title: "Successfully Signed Up!\nRedirecting to Login Page",
@@ -72,7 +72,7 @@ else{
       });
       const { data: postData, error: insertError } = await client
     .from("users-data")
-    .insert([{ name: username.value, email : email.value , role: "user" }]);
+    .insert([{ name: username.value, email : email.value , role: "user", uid:data.user.user_metadata.sub }]);
 
   if (insertError) {
     Swal.fire("Error", insertError.message, "error");
